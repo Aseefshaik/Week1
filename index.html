@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Quiz App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        #app {
+            text-align: center;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #answers-container {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #answers-container li {
+            margin: 10px 0;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #timer-container {
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #d9534f;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Dynamic Quiz App</h1>
+        <div id="quiz-container">
+            <div id="timer-container">Time Left: <span id="timer">30</span> seconds</div>
+            <div id="question-container"></div>
+            <ul id="answers-container"></ul>
+            <button id="next-button" class="hidden">Next Question</button>
+        </div>
+        <div id="results-container" class="hidden">
+            <h2>Your Score: <span id="score"></span></h2>
+            <button id="restart-button">Restart Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                question: "What is the capital of France?",
+                options: ["Berlin", "Madrid", "Paris", "Lisbon"],
+                answer: "Paris"
+            },
+            {
+                question: "Which programming language is known as the language of the web?",
+                options: ["Python", "C++", "JavaScript", "Java"],
+                answer: "JavaScript"
+            },
+            {
+                question: "Who wrote 'To Kill a Mockingbird'?",
+                options: ["Harper Lee", "Mark Twain", "J.K. Rowling", "Ernest Hemingway"],
+                answer: "Harper Lee"
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timeLeft = 30; // Timer starts at 30 seconds
+        let timer;
+
+        const questionContainer = document.getElementById("question-container");
+        const answersContainer = document.getElementById("answers-container");
+        const nextButton = document.getElementById("next-button");
+        const resultsContainer = document.getElementById("results-container");
+        const scoreDisplay = document.getElementById("score");
+        const restartButton = document.getElementById("restart-button");
+        const timerDisplay = document.getElementById("timer");
+
+        function loadQuestion() {
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionContainer.textContent = currentQuestion.question;
+            answersContainer.innerHTML = "";
+
+            currentQuestion.options.forEach(option => {
+                const li = document.createElement("li");
+                const button = document.createElement("button");
+                button.textContent = option;
+                button.addEventListener("click", () => checkAnswer(option));
+                li.appendChild(button);
+                answersContainer.appendChild(li);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timer);
+            timeLeft = 30; // Reset timer
+            timerDisplay.textContent = timeLeft;
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    nextQuestion(); // Auto move to the next question
+                }
+            }, 1000);
+        }
+
+        function checkAnswer(selectedOption) {
+            clearInterval(timer); // Stop timer once an answer is selected
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            if (selectedOption === currentQuestion.answer) {
+                score++;
+                localStorage.setItem("score", score); // Save score to local storage
+            }
+            nextButton.classList.remove("hidden");
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+            nextButton.classList.add("hidden");
+        }
+
+        function showResults() {
+            questionContainer.classList.add("hidden");
+            answersContainer.classList.add("hidden");
+            nextButton.classList.add("hidden");
+            resultsContainer.classList.remove("hidden");
+            scoreDisplay.textContent = score;
+            clearInterval(timer); // Stop timer on results page
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            localStorage.clear(); // Clear stored score
+            resultsContainer.classList.add("hidden");
+            questionContainer.classList.remove("hidden");
+            answersContainer.classList.remove("hidden");
+            loadQuestion();
+        }
+
+        nextButton.addEventListener("click", nextQuestion);
+        restartButton.addEventListener("click", restartQuiz);
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedScore = localStorage.getItem("score");
+            if (savedScore) {
+                score = parseInt(savedScore);
+            }
+            loadQuestion();
+        });
+    </script>
+</body>
+</html>
